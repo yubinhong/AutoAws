@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html class="x-admin-sm">
+    <head>
+        <meta charset="UTF-8">
+        <title>欢迎页面-X-admin2.2</title>
+        <meta name="renderer" content="webkit">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+        <link rel="stylesheet" href="../../static/css/font.css">
+        <link rel="stylesheet" href="../../static/css/xadmin.css">
+        <script src="../../static/lib/layui/layui.js" charset="utf-8"></script>
+        <script type="text/javascript" src="../../static/js/xadmin.js"></script>
+        <!--[if lt IE 9]>
+          <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+          <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+    </head>
+    <body>
+        <div class="x-nav">
+          <span class="layui-breadcrumb">
+            <a href="#">首页</a>
+            <a href="#">模版管理</a>
+            <a>
+              <cite>模版详情</cite></a>
+          </span>
+          <a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" onclick="location.reload()" title="刷新">
+            <i class="layui-icon layui-icon-refresh" style="line-height:30px"></i></a>
+        </div>
+        <div class="layui-fluid">
+            <div class="layui-row layui-col-space15">
+                <div class="layui-col-md12">
+                    <div class="layui-card">
+                        <div class="layui-card-body ">
+                            <form class="layui-form layui-col-space5">
+                                <div class="layui-input-inline layui-show-xs-block">
+                                    <select name="template" lay-filter="template" id="template">
+                                    </select>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="layui-card-header">
+                            <button class="layui-btn layui-btn-danger" onclick="delAll()"><i class="layui-icon"></i>批量删除</button>
+                            <button class="layui-btn" onclick="xadmin.open('添加实例','/InstanceAdd/',400,600)"><i class="layui-icon"></i>添加</button>
+                        </div>
+
+                        <div class="layui-card-body " id="instance" lay-filter="instance" lay-data="{id: 'instance'}">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> 
+    </body>
+    <script>
+      layui.use(['table', 'form'], function() {
+          let table = layui.table;
+          let form = layui.form;
+
+          $.ajax({
+                  type: 'post',
+                  url: '/Template/',
+                  dataType: 'json',
+                  success: function(res){
+                      let data = res.data;
+                      $('select').append('<option value="">全部</option>')
+                      $.each(data, function (index, item) {
+                        $('select').append('<option value="'+item.name+'">'+item.name+'</option>')
+                      });
+                      form.render();
+                  }
+                });
+          form.on('select(template)', function (data) {
+            table.reload('instance',{
+                where: {template: $('#template').val()},
+                page: {
+                    curr: 1
+                }
+            })
+          });
+          table.render({
+              elem: '#instance'
+              , height: 600
+              , url: '/Instance/' //数据接口
+              , method: 'post'  //
+              , where: {template: $('#template').val()}
+              , page: true //开启分页
+              , cols: [[ //表头
+                  {checkbox: true}
+                  , {field: 'id', title: 'ID'}
+                  , {field: 'template_name', title: '模版名称'}
+                  , {field: 'name', title: '实例名称'}
+                  , {field: 'disk', title: '硬盘大小'}
+                  , {field: 'zone', title: '区域'}
+                  , {field: 'image_id', title: 'AMI'}
+                  , {field: 'key_name', title: '密钥对'}
+                  , {field: 'security_ports', title: '安全组端口'}
+                  , {field: 'count', title: '数量'}
+                  , {fixed: 'right', title: '操作', align: 'center', width: '12%', toolbar: '#bar'}
+              ]]
+          });
+
+          table.on('tool(instance)', function (obj) { //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+              let data = obj.data; //获得当前行数据
+              let layEvent = obj.event; //获得 lay-event 对应的值
+              let tr = obj.tr; //获得当前行 tr 的DOM对象
+
+              if (layEvent === 'del') { //删除
+                  layer.confirm('真的删除行么', function (index) {
+                      obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+                      layer.close(index);
+                      //向服务端发送删除指令
+                      $.post(
+                          "/InstanceDel/",
+                          data,
+                          function (res) {
+                              layer.msg(res.message, {time: 2000});
+                          },
+                          'json'
+                      );
+                  });
+              } else if (layEvent === 'edit') { //编辑
+                  //do something
+                  let htmlData = '        <div class="layui-fluid">\n' +
+                      '            <div class="layui-row">\n' +
+                      '                <form class="layui-form">\n' +
+                      '                    <div class="layui-form-item">\n' +
+                      '                      <label for="name" class="layui-form-label">\n' +
+                      '                          <span class="x-red">*</span>实例名称\n' +
+                      '                      </label>\n' +
+                      '                      <div class="layui-input-inline">\n' +
+                      '                          <input type="text" id="name" name="name" required="" lay-verify="required"\n' +
+                      '                          autocomplete="off" class="layui-input" value="' + data.name +'">\n' +
+                      '                      </div>\n' +
+                      '                    </div>\n' +
+                      '                    <div class="layui-form-item">\n' +
+                      '                      <label for="name" class="layui-form-label">\n' +
+                      '                          <span class="x-red">*</span>实例类型\n' +
+                      '                      </label>\n' +
+                      '                      <div class="layui-input-inline">\n' +
+                      '                          <input type="text" id="instance_type" name="instance_type" required="" lay-verify="required"\n' +
+                      '                          autocomplete="off" class="layui-input" value="' + data.instance_type +'">\n' +
+                      '                      </div>\n' +
+                      '                    </div>\n' +
+                      '                    <div class="layui-form-item">\n' +
+                      '                      <label for="name" class="layui-form-label">\n' +
+                      '                          <span class="x-red">*</span>硬盘空间\n' +
+                      '                      </label>\n' +
+                      '                      <div class="layui-input-inline">\n' +
+                      '                          <input type="text" id="disk" name="disk" required="" lay-verify="required"\n' +
+                      '                          autocomplete="off" class="layui-input" value="' + data.disk + '">\n' +
+                      '                      </div>\n' +
+                      '                    </div>\n' +
+                      '                    <div class="layui-form-item">\n' +
+                      '                      <label for="name" class="layui-form-label">\n' +
+                      '                          <span class="x-red">*</span>区域\n' +
+                      '                      </label>\n' +
+                      '                      <div class="layui-input-inline">\n' +
+                      '                          <input type="text" id="zone" name="zone" required="" lay-verify="required"\n' +
+                      '                          autocomplete="off" class="layui-input" value="' + data.zone + '">\n' +
+                      '                      </div>\n' +
+                      '                    </div>\n' +
+                      '                    <div class="layui-form-item">\n' +
+                      '                      <label for="name" class="layui-form-label">\n' +
+                      '                          <span class="x-red">*</span>AMI\n' +
+                      '                      </label>\n' +
+                      '                      <div class="layui-input-inline">\n' +
+                      '                          <input type="text" id="image_id" name="image_id" required="" lay-verify="required"\n' +
+                      '                          autocomplete="off" class="layui-input" value="' + data.image_id + '">\n' +
+                      '                      </div>\n' +
+                      '                    </div>\n' +
+                      '                    <div class="layui-form-item">\n' +
+                      '                      <label for="name" class="layui-form-label">\n' +
+                      '                          <span class="x-red">*</span>密钥对\n' +
+                      '                      </label>\n' +
+                      '                      <div class="layui-input-inline">\n' +
+                      '                          <input type="text" id="key_name" name="key_name" required="" lay-verify="required"\n' +
+                      '                          autocomplete="off" class="layui-input" value="' + data.key_name + '">\n' +
+                      '                      </div>\n' +
+                      '                    </div>\n' +
+                      '                    <div class="layui-form-item">\n' +
+                      '                      <label for="name" class="layui-form-label">\n' +
+                      '                          <span class="x-red">*</span>安全组端口\n' +
+                      '                      </label>\n' +
+                      '                      <div class="layui-input-inline">\n' +
+                      '                          <input type="text" id="security_ports" name="security_ports" required="" lay-verify="required"\n' +
+                      '                          autocomplete="off" class="layui-input" value="' + data.security_ports +'">\n' +
+                      '                      </div>\n' +
+                      '                    </div>\n' +
+                      '                    <div class="layui-form-item">\n' +
+                      '                      <label for="name" class="layui-form-label">\n' +
+                      '                          <span class="x-red">*</span>数量\n' +
+                      '                      </label>\n' +
+                      '                      <div class="layui-input-inline">\n' +
+                      '                          <input type="text" id="count" name="count" required="" lay-verify="required"\n' +
+                      '                          autocomplete="off" class="layui-input" value="' + data.count + '">\n' +
+                      '                      </div>\n' +
+                      '                    </div>\n' +
+                      '              </form>\n' +
+                      '            </div>\n' +
+                      '        </div>';
+                  layer.open({
+                      title: "更新",
+                      area: ["400px", "600px"],
+                      type: 1,
+                      content: htmlData,//把数据显示在弹出层上
+                      btn: ['确定', '我再想想'],
+                      yes: function (index, layero) {//改完，点击确定
+                          let re_name = layero.find("#name").val();//获得修改后的值
+                          let re_instance_type = layero.find("#instance_type").val();
+                          let re_disk = layero.find("#disk").val();
+                          let re_zone = layero.find("#zone").val();
+                          let re_image_id = layero.find("#image_id").val();
+                          let re_key_name = layero.find("#key_name").val();
+                          let re_security_ports = layero.find("#security_ports").val();
+                          let re_count = layero.find("#count").val();
+                          //同步更新缓存对应的值
+                          $.post(
+                              "/InstanceUpdate/",
+                              {id: data.id, name: re_name, instance_type: re_instance_type, disk: re_disk,
+                              zone: re_zone, image_id: re_image_id, key_name: re_key_name,
+                                  security_ports: re_security_ports, count: re_count},
+                              function (res) {
+                                  layer.msg(res.message, {time: 2000});
+                                  if (res.code === 0) {
+                                      obj.update({
+                                          name: re_name,
+                                          instance_type: re_instance_type,
+                                          disk: re_disk,
+                                          zone: re_zone,
+                                          image_id: re_image_id,
+                                          key_name: re_key_name,
+                                          security_ports: re_security_ports,
+                                          count: re_count
+                                      });
+                                      layer.close(index);
+                                  }
+                              },
+                              'json'
+                          );
+
+                      }
+                  });
+              }
+          });
+      });
+
+
+      function delAll (argument) {
+
+        let data = tableCheck.getData();
+  
+        layer.confirm('确认要删除吗？'+data,function(index){
+            //捉到所有被选中的，发异步进行删除
+            layer.msg('删除成功', {icon: 1});
+            $(".layui-form-checked").not('.header').parents('tr').remove();
+        });
+      }
+    </script>
+    <script type="text/html" id="bar">
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+
+    </script>
+</html>
