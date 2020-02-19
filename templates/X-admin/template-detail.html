@@ -89,11 +89,9 @@
                   , {field: 'id', title: 'ID'}
                   , {field: 'template_name', title: '模版名称'}
                   , {field: 'name', title: '实例名称'}
-                  , {field: 'disk', title: '硬盘大小'}
-                  , {field: 'zone', title: '区域'}
+                  , {field: 'disk', title: '硬盘大小(GB)'}
                   , {field: 'image_id', title: 'AMI'}
                   , {field: 'key_name', title: '密钥对'}
-                  , {field: 'security_ports', title: '安全组端口'}
                   , {field: 'count', title: '数量'}
                   , {fixed: 'right', title: '操作', align: 'center', width: '12%', toolbar: '#bar'}
               ]]
@@ -152,20 +150,13 @@
                       '                    </div>\n' +
                       '                    <div class="layui-form-item">\n' +
                       '                      <label for="name" class="layui-form-label">\n' +
-                      '                          <span class="x-red">*</span>区域\n' +
-                      '                      </label>\n' +
-                      '                      <div class="layui-input-inline">\n' +
-                      '                          <input type="text" id="zone" name="zone" required="" lay-verify="required"\n' +
-                      '                          autocomplete="off" class="layui-input" value="' + data.zone + '">\n' +
-                      '                      </div>\n' +
-                      '                    </div>\n' +
-                      '                    <div class="layui-form-item">\n' +
-                      '                      <label for="name" class="layui-form-label">\n' +
                       '                          <span class="x-red">*</span>AMI\n' +
                       '                      </label>\n' +
                       '                      <div class="layui-input-inline">\n' +
-                      '                          <input type="text" id="image_id" name="image_id" required="" lay-verify="required"\n' +
-                      '                          autocomplete="off" class="layui-input" value="' + data.image_id + '">\n' +
+                      '                          <select name="image_id" id="image_id" required="" lay-verify="required">\n' +
+                      '                              <option value="ami-045f38c93733dd48d">Centos 7</option>\n' +
+                      '                              <option value="ami-0c0f945615e3d22a3">Ubuntu 18.04</option>\n' +
+                      '                         </select>\n' +
                       '                      </div>\n' +
                       '                    </div>\n' +
                       '                    <div class="layui-form-item">\n' +
@@ -175,15 +166,6 @@
                       '                      <div class="layui-input-inline">\n' +
                       '                          <input type="text" id="key_name" name="key_name" required="" lay-verify="required"\n' +
                       '                          autocomplete="off" class="layui-input" value="' + data.key_name + '">\n' +
-                      '                      </div>\n' +
-                      '                    </div>\n' +
-                      '                    <div class="layui-form-item">\n' +
-                      '                      <label for="name" class="layui-form-label">\n' +
-                      '                          <span class="x-red">*</span>安全组端口\n' +
-                      '                      </label>\n' +
-                      '                      <div class="layui-input-inline">\n' +
-                      '                          <input type="text" id="security_ports" name="security_ports" required="" lay-verify="required"\n' +
-                      '                          autocomplete="off" class="layui-input" value="' + data.security_ports +'">\n' +
                       '                      </div>\n' +
                       '                    </div>\n' +
                       '                    <div class="layui-form-item">\n' +
@@ -208,17 +190,14 @@
                           let re_name = layero.find("#name").val();//获得修改后的值
                           let re_instance_type = layero.find("#instance_type").val();
                           let re_disk = layero.find("#disk").val();
-                          let re_zone = layero.find("#zone").val();
                           let re_image_id = layero.find("#image_id").val();
                           let re_key_name = layero.find("#key_name").val();
-                          let re_security_ports = layero.find("#security_ports").val();
                           let re_count = layero.find("#count").val();
                           //同步更新缓存对应的值
                           $.post(
                               "/InstanceUpdate/",
                               {id: data.id, name: re_name, instance_type: re_instance_type, disk: re_disk,
-                              zone: re_zone, image_id: re_image_id, key_name: re_key_name,
-                                  security_ports: re_security_ports, count: re_count},
+                                  image_id: re_image_id, key_name: re_key_name, count: re_count},
                               function (res) {
                                   layer.msg(res.message, {time: 2000});
                                   if (res.code === 0) {
@@ -226,10 +205,8 @@
                                           name: re_name,
                                           instance_type: re_instance_type,
                                           disk: re_disk,
-                                          zone: re_zone,
                                           image_id: re_image_id,
                                           key_name: re_key_name,
-                                          security_ports: re_security_ports,
                                           count: re_count
                                       });
                                       layer.close(index);

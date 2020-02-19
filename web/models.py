@@ -17,11 +17,9 @@ class Template(models.Model):
 class Instance(models.Model):
     name = models.CharField(max_length=128, verbose_name="实例名称")
     instance_type = models.CharField(max_length=32, verbose_name="实例类型")
-    disk = models.CharField(max_length=8, verbose_name="硬盘大小")
-    zone = models.CharField(max_length=32, verbose_name="区域")
+    disk = models.IntegerField(verbose_name="硬盘大小")
     image_id = models.CharField(max_length=32, verbose_name="AMI")
     key_name = models.CharField(max_length=32, verbose_name="密钥对")
-    security_ports = models.CharField(max_length=128, verbose_name="安全组端口")
     count = models.IntegerField(verbose_name="数量")
     template = models.ForeignKey("Template", on_delete=models.CASCADE)
 

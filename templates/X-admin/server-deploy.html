@@ -21,7 +21,7 @@
             <a href="#">首页</a>
             <a href="#">服务器管理</a>
             <a>
-              <cite>服务器列表</cite></a>
+              <cite>服务器部署</cite></a>
           </span>
           <a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" onclick="location.reload()" title="刷新">
             <i class="layui-icon layui-icon-refresh" style="line-height:30px"></i></a>
@@ -33,31 +33,37 @@
                         <div class="layui-card-body ">
                             <form class="layui-form layui-col-space5">
                                 <div class="layui-input-inline layui-show-xs-block">
-                                    <select name="account" lay-filter="account" id="account">
+                                    <select name="account" lay-filter="account" id="account" required="" lay-verify="required">
                                     </select>
                                 </div>
                                 <div class="layui-input-inline layui-show-xs-block">
-                                    <select name="vpc" lay-filter="vpc" id="vpc">
+                                    <select name="vpc" lay-filter="vpc" id="vpc" required="" lay-verify="required">
                                     </select>
                                 </div>
+                                <div class="layui-input-inline layui-show-xs-block">
+                                    <select name="subnet" lay-filter="subnet" id="subnet" required="" lay-verify="required">
+                                    </select>
+                                </div>
+                                <div class="layui-input-inline layui-show-xs-block">
+                                    <select name="template" lay-filter="template" id="template" required="" lay-verify="required">
+                                    </select>
+                                </div>
+                                 <div class="layui-form-item">
+                                    <div class="layui-input-inline layui-show-xs-block">
+                                      <button class="layui-btn" lay-submit lay-filter="deploy">部署</button>
+                                    </div>
+                                 </div>
                             </form>
                         </div>
-                        <div class="layui-card-header">
-                            <button class="layui-btn" onclick="xadmin.open('添加服务器','/ServerAdd/',400,600)"><i class="layui-icon"></i>添加</button>
-                        </div>
 
-                        <div class="layui-card-body " id="server" lay-filter="server" lay-data="{id: 'server'}">
-
-                        </div>
                     </div>
                 </div>
             </div>
         </div> 
     </body>
     <script>
-      layui.use(['table', 'form'], function() {
-          let table = layui.table;
-          let form = layui.form;
+      layui.use(['form', 'layer'], function() {
+          let form = layui.form, layer = layui.layer, $ = layui.jquery;
 
           $.ajax({
                   type: 'post',
@@ -68,6 +74,19 @@
                       $('#account').append('<option value="" selected="true" disabled="disabled">---请选择账号---</option>');
                       $.each(data, function (index, item) {
                         $('#account').append('<option value="'+item.name+'">'+item.name+'</option>')
+                      });
+                      form.render();
+                  }
+                });
+          $.ajax({
+                  type: 'post',
+                  url: '/Template/',
+                  dataType: 'json',
+                  success: function(res){
+                      let data = res.data;
+                      $('#template').append('<option value="" selected="true" disabled="disabled">---请选择模版---</option>');
+                      $.each(data, function (index, item) {
+                        $('#template').append('<option value="'+item.id+'">'+item.name+'</option>')
                       });
                       form.render();
                   }
@@ -89,38 +108,40 @@
                 });
           });
           form.on('select(vpc)', function (data) {
-            table.reload('server',{
-                url: '/Server/',
-                where: {account: $('#account').val(), vpc: $('#vpc').val()},
-                page: {
-                    curr: 1
-                },
-                loading: true
-            });
+              $.ajax({
+                  type: 'post',
+                  url: '/Subnet/',
+                  data: {'account': $('#account').val(), 'vpc': $('#vpc').val()},
+                  dataType: 'json',
+                  success: function(res){
+                      let data = res.data;
+                      $('#subnet').append('<option value="" selected="true" disabled="disabled">---请选择subnet---</option>');
+                      $.each(data, function (index, item) {
+                        $('#subnet').append('<option value="'+item.subnet_id+'">'+item.avail_zone+'</option>')
+                      });
+                      form.render();
+                  }
+              });
           });
-          table.render({
-              elem: '#server'
-              , height: 500
-              , url: ''
-              , method: 'post'  //
-              , page: true //开启分页
-              , cols: [[ //表头
-                  {field: 'vpc_id', title: 'vpc_id'}
-                  , {field: 'name', title: '服务器名称'}
-                  , {field: 'instance_type', title: '实例类型'}
-                  , {field: 'private_address', title: '私有IP地址'}
-                  , {field: 'zone', title: '区域'}
-                  , {field: 'image_id', title: 'AMI'}
-                  , {field: 'key_name', title: '密钥对'}
-                  , {field: 'security_group', title: '安全组'}
-                  , {field: 'status', title: '状态'}
-                  , {fixed: 'right', title: '操作', align: 'center', width: '12%', toolbar: '#bar'}
-              ]]
-              , loading: true
+          form.on('submit(deploy)', function (data) {
+                $.ajax({
+                    type: 'post',
+                    url: '/ServerDeploy/',
+                    data: data.field,
+                    dataType: 'json',
+                    success: function(res){
+                        let code = res.code;
+                        if (code === 0) {
+                            layer.msg("部署成功！")
+                        } else {
+                            layer.msg("部署失败！")
+                        }
+                    }
+                });
+              return false
           });
 
       });
-
     </script>
     <script type="text/html" id="bar">
         <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>

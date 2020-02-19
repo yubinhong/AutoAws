@@ -26,7 +26,7 @@
                           <span class="x-red">*</span>模版名称
                       </label>
                       <div class="layui-input-inline">
-                        <select name="template_name" id="template_name" lay-filter="template">
+                        <select name="template_name" id="template_name" lay-filter="template" required="" lay-verify="required">
                         </select>
                       </div>
                     </div>
@@ -59,20 +59,13 @@
                     </div>
                     <div class="layui-form-item">
                       <label for="name" class="layui-form-label">
-                          <span class="x-red">*</span>区域
-                      </label>
-                      <div class="layui-input-inline">
-                          <input type="text" id="zone" name="zone" required="" lay-verify="required"
-                          autocomplete="off" class="layui-input">
-                      </div>
-                    </div>
-                    <div class="layui-form-item">
-                      <label for="name" class="layui-form-label">
                           <span class="x-red">*</span>AMI
                       </label>
                       <div class="layui-input-inline">
-                          <input type="text" id="image_id" name="image_id" required="" lay-verify="required"
-                          autocomplete="off" class="layui-input">
+                        <select name="image_id" id="image_id" required="" lay-verify="required">
+                            <option value="ami-045f38c93733dd48d">Centos 7</option>
+                            <option value="ami-0c0f945615e3d22a3">Ubuntu 18.04</option>
+                        </select>
                       </div>
                     </div>
                     <div class="layui-form-item">
@@ -81,15 +74,6 @@
                       </label>
                       <div class="layui-input-inline">
                           <input type="text" id="key_name" name="key_name" required="" lay-verify="required"
-                          autocomplete="off" class="layui-input">
-                      </div>
-                    </div>
-                    <div class="layui-form-item">
-                      <label for="name" class="layui-form-label">
-                          <span class="x-red">*</span>安全组端口
-                      </label>
-                      <div class="layui-input-inline">
-                          <input type="text" id="security_ports" name="security_ports" required="" lay-verify="required"
                           autocomplete="off" class="layui-input">
                       </div>
                     </div>
@@ -126,7 +110,7 @@
                   success: function(res){
                       let data = res.data;
                       $.each(data, function (index, item) {
-                        $('select').append('<option value="'+item.name+'">'+item.name+'</option>')
+                        $('#template_name').append('<option value="'+item.name+'">'+item.name+'</option>')
                       });
                       form.render();
                   }
@@ -157,9 +141,6 @@
 
             });
 
-        function getTemplate() {
-
-      }
         </script>
     </body>
 
