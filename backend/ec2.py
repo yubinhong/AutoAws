@@ -23,6 +23,14 @@ class AwsEc2(object):
         )
         return res
 
+    def get_instance_by_resource(self, vpc_id):
+        instance_list = self.resource.instances.all()
+        res_list = []
+        for i in instance_list:
+            if i.vpc_id == vpc_id:
+                res_list.append(i)
+        return res_list
+
     def get_vpc(self):
         res = self.client.describe_vpcs()
         return res
@@ -66,6 +74,7 @@ class AwsEc2(object):
         for instance_template in instance_template_list:
             try:
                 res1 = self.create_security_group(instance_template['name'], vpc_id)
+                print(e)
             except Exception as e:
                 res1 = self.get_security_group(instance_template['name'])['SecurityGroups'][0]
             res = self.resource.create_instances(
@@ -101,7 +110,7 @@ class AwsEc2(object):
             for instance in res:
                 status = instance.state
                 while status['Code'] != 16:
-                    time.sleep(10)
+                    time.sleep(6)
                     instance.load()
                     status = instance.state
                 if status['Code'] == 16:
@@ -114,10 +123,63 @@ class AwsEc2(object):
                 res_list.append(instance)
         return res_list
 
+    def create_instance(self, instance_dict, vpc_id, subnet_id):
+        try:
+            res1 = self.create_security_group(instance_dict['name'], vpc_id)
+        except Exception as e:
+            print(e)
+            res1 = self.get_security_group(instance_dict['name'])['SecurityGroups'][0]
+        res = self.resource.create_instances(
+            BlockDeviceMappings=[
+                {
+                    'DeviceName': '/dev/sda1',
+                    'Ebs': {
+                        'DeleteOnTermination': False,
+                        'VolumeSize': instance_dict['disk'],
+                        'VolumeType': 'gp2',
+                        'Encrypted': False
+                    }
+                },
+            ],
+            ImageId=instance_dict['image_id'],
+            InstanceType=instance_dict['instance_type'],
+            KeyName=instance_dict['key_name'],
+            NetworkInterfaces=[
+                {
+                    'AssociatePublicIpAddress': True,
+                    'DeleteOnTermination': True,
+                    'DeviceIndex': 0,
+                    'Groups': [
+                        res1['GroupId'],
+                    ],
+                    'SubnetId': subnet_id,
+                    'InterfaceType': 'interface'
+                },
+            ],
+            MaxCount=instance_dict['count'],
+            MinCount=instance_dict['count'],
+        )
+        for instance in res:
+            status = instance.state
+            while status['Code'] != 16:
+                time.sleep(6)
+                instance.load()
+                status = instance.state
+            if status['Code'] == 16:
+                instance.create_tags(
+                    Tags=[{
+                        'Key': 'Name',
+                        'Value': instance_dict['name']
+                    }]
+                )
+        return res
+
 
 if __name__ == "__main__":
     ec2 = AwsEc2("", "")
-    instance_list = ec2.resource.instances.all()
-    for instance in instance_list:
-        print(instance.tags)
+    res = ec2.get_instance_by_resource('xxxxxx')
+    for i in res:
+        print(i.placement)
+
+
 

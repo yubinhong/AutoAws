@@ -286,16 +286,16 @@ def server(request):
         try:
             account_obj = models.AwsAccount.objects.get(name=account)
             client = AwsEc2(account_obj.access_key, account_obj.secret_key)
-            res_dict = client.get_instance(vpc_id)
-            count = len(res_dict['Reservations'])
-            data_list = [{'vpc_id': data['Instances'][0]['VpcId'], 'name': data['Instances'][0]['Tags'][0]['Value'],
-                          'instance_type': data['Instances'][0]['InstanceType'],
-                          'zone': data['Instances'][0]['Placement']['AvailabilityZone'],
-                          'image_id': data['Instances'][0]['ImageId'], 'key_name': data['Instances'][0]['KeyName'],
-                          'security_group': ",".join([group['GroupName'] for group in data['Instances'][0]['SecurityGroups']]),
-                          'private_address': data['Instances'][0]['PrivateIpAddress'] if data['Instances'][0]['State']['Name'] != 'terminated' else '',
-                          'status': data['Instances'][0]['State']['Name']}
-                         for data in res_dict['Reservations'][limit * (page - 1):limit * page]]
+            res_list = client.get_instance_by_resource(vpc_id)
+            count = len(res_list)
+            data_list = [{'vpc_id': data.vpc_id, 'name': data.tags[0]['Value'],
+                          'instance_type': data.instance_type,
+                          'zone': data.placement['AvailabilityZone'],
+                          'image_id': data.image_id, 'key_name': data.key_name,
+                          'security_group': ",".join([group['GroupName'] for group in data.security_groups]),
+                          'private_address': data.private_ip_address if data.state['Name'] != 'terminated' else '',
+                          'status': data.state['Name']}
+                         for data in res_list[limit * (page - 1):limit * page]]
             result = {'code': '0', 'msg': 'success', 'count': count, 'data': data_list}
         except Exception as e:
             print(e)
