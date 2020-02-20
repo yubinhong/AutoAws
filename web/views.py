@@ -293,7 +293,7 @@ def server(request):
                           'zone': data['Instances'][0]['Placement']['AvailabilityZone'],
                           'image_id': data['Instances'][0]['ImageId'], 'key_name': data['Instances'][0]['KeyName'],
                           'security_group': ",".join([group['GroupName'] for group in data['Instances'][0]['SecurityGroups']]),
-                          'private_address': data['Instances'][0]['PrivateIpAddress'],
+                          'private_address': data['Instances'][0]['PrivateIpAddress'] if data['Instances'][0]['State']['Name'] != 'terminated' else '',
                           'status': data['Instances'][0]['State']['Name']}
                          for data in res_dict['Reservations'][limit * (page - 1):limit * page]]
             result = {'code': '0', 'msg': 'success', 'count': count, 'data': data_list}

@@ -84,11 +84,10 @@ class AwsEc2(object):
             )
             instance = res[0]
             status = instance.state
-            print('1111')
-            print(status)
-            print('2222')
-            instance.wait_until_running()
-            status = instance.state
+            while status['Code'] != 16:
+                time.sleep(10)
+                instance.load()
+                status = instance.state
             if status['Code'] == 16:
                 instance.create_tags(
                     Tags=[{
@@ -102,7 +101,7 @@ class AwsEc2(object):
 
 if __name__ == "__main__":
     ec2 = AwsEc2("", "")
-    res = ec2.get_vpc()
-    vpc_id = res['Vpcs'][0]['VpcId']
-    res2 = ec2.get_subnet(vpc_id)
-    print(res2)
+    instance_list = ec2.resource.instances.all()
+    for instance in instance_list:
+        print(instance.tags)
+
