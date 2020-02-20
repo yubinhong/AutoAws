@@ -40,6 +40,19 @@ class AwsEc2(object):
         )
         return res
 
+    def get_security_group(self, name):
+        res = self.client.describe_security_groups(
+            Filters=[
+                {
+                    'Name': 'group-name',
+                    'Values': [
+                        name,
+                    ]
+                },
+            ]
+        )
+        return res
+
     def create_security_group(self, name, vpc_id):
         res = self.client.create_security_group(
             Description=name,
@@ -51,7 +64,10 @@ class AwsEc2(object):
     def create_instance_from_template(self, instance_template_list, vpc_id, subnet_id):
         res_list = []
         for instance_template in instance_template_list:
-            res1 = self.create_security_group(instance_template['name'], vpc_id)
+            try:
+                res1 = self.create_security_group(instance_template['name'], vpc_id)
+            except Exception as e:
+                res1 = self.get_security_group(instance_template['name'])['SecurityGroups'][0]
             res = self.resource.create_instances(
                 BlockDeviceMappings=[
                     {
@@ -79,23 +95,23 @@ class AwsEc2(object):
                         'InterfaceType': 'interface'
                     },
                 ],
-                MaxCount=1,
-                MinCount=1,
+                MaxCount=instance_template['count'],
+                MinCount=instance_template['count'],
             )
-            instance = res[0]
-            status = instance.state
-            while status['Code'] != 16:
-                time.sleep(10)
-                instance.load()
+            for instance in res:
                 status = instance.state
-            if status['Code'] == 16:
-                instance.create_tags(
-                    Tags=[{
-                        'Key': 'Name',
-                        'Value': instance_template['name']
-                    }]
-                )
-            res_list.append(res[0])
+                while status['Code'] != 16:
+                    time.sleep(10)
+                    instance.load()
+                    status = instance.state
+                if status['Code'] == 16:
+                    instance.create_tags(
+                        Tags=[{
+                            'Key': 'Name',
+                            'Value': instance_template['name']
+                        }]
+                    )
+                res_list.append(instance)
         return res_list
 
 

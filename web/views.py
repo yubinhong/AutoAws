@@ -320,11 +320,11 @@ def server_deploy(request):
             tpl_obj = models.Template.objects.get(pk=template_id)
             instance_list = models.Instance.objects.filter(template=tpl_obj)
             instance_list = [{'name': instance.name, 'disk': instance.disk, 'image_id': instance.image_id,
-                              'instance_type': instance.instance_type, 'key_name': instance.key_name}
+                              'instance_type': instance.instance_type, 'key_name': instance.key_name,
+                              'count': instance.count}
                              for instance in instance_list]
             res_list = client.create_instance_from_template(instance_template_list=instance_list, vpc_id=vpc_id,
                                                             subnet_id=subnet_id)
-            print(res_list)
             if len(res_list) > 0:
                 result = {'code': 0, 'msg': "部署成功！"}
             else:
