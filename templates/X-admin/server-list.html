@@ -80,6 +80,7 @@
                   dataType: 'json',
                   success: function(res){
                       let data = res.data;
+                      $('#vpc').empty();
                       $('#vpc').append('<option value="" selected="true" disabled="disabled">---请选择vpc---</option>');
                       $.each(data, function (index, item) {
                         $('#vpc').append('<option value="'+item.vpc_id+'">'+item.name+'</option>')
