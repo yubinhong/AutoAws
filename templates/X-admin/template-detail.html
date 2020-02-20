@@ -154,8 +154,6 @@
                       '                      </label>\n' +
                       '                      <div class="layui-input-inline">\n' +
                       '                          <select name="image_id" id="image_id" required="" lay-verify="required">\n' +
-                      '                              <option value="ami-045f38c93733dd48d">Centos 7</option>\n' +
-                      '                              <option value="ami-0c0f945615e3d22a3">Ubuntu 18.04</option>\n' +
                       '                         </select>\n' +
                       '                      </div>\n' +
                       '                    </div>\n' +
@@ -186,6 +184,17 @@
                       type: 1,
                       content: htmlData,//把数据显示在弹出层上
                       btn: ['确定', '我再想想'],
+                      success: function(layero, index){
+                          $('#image_id').empty();
+                          if (data.image_id === "ami-045f38c93733dd48d"){
+                              $('#image_id').append('<option value="ami-045f38c93733dd48d" selected="true">Centos 7</option>');
+                              $('#image_id').append('<option value="ami-0c0f945615e3d22a3">Ubuntu 18.04</option>');
+                          } else {
+                              $('#image_id').append('<option value="ami-045f38c93733dd48d">Centos 7</option>');
+                              $('#image_id').append('<option value="ami-0c0f945615e3d22a3" selected="true">Ubuntu 18.04</option>');
+                          }
+                          form.render('select');
+                      },
                       yes: function (index, layero) {//改完，点击确定
                           let re_name = layero.find("#name").val();//获得修改后的值
                           let re_instance_type = layero.find("#instance_type").val();

@@ -255,6 +255,7 @@ def instance_update(request):
         id = request.POST['id']
         re_name = request.POST['name']
         re_instance_type = request.POST['instance_type']
+        re_image_id = request.POST['image_id']
         re_disk = int(request.POST['disk'])
         re_key_name = request.POST['key_name']
         re_count = request.POST['count']
@@ -263,6 +264,7 @@ def instance_update(request):
             in_obj.name = re_name
             in_obj.instance_type = re_instance_type
             in_obj.disk = re_disk
+            in_obj.image_id = re_image_id
             in_obj.key_name = re_key_name
             in_obj.count = re_count
             in_obj.save()
