@@ -346,7 +346,7 @@ def vpc(request):
             client = AwsEc2(account_obj.access_key, account_obj.secret_key)
             res_dict = client.get_vpc()
             count = len(res_dict['Vpcs'])
-            data_list = [{'vpc_id': data['VpcId'], 'name': data['Tags'][0]['Value']}
+            data_list = [{'vpc_id': data['VpcId'], 'name': data['Tags'][0]['Value'] if 'Tags' in data.keys() else data['VpcId']}
                          for data in res_dict['Vpcs']]
             result = {'code': '0', 'msg': 'success', 'count': count, 'data': data_list}
         except Exception as e:
@@ -367,8 +367,8 @@ def subnet(request):
             client = AwsEc2(account_obj.access_key, account_obj.secret_key)
             res_dict = client.get_subnet(vpc_id)
             count = len(res_dict['Subnets'])
-            data_list = [{'subnet_id': data['SubnetId'], 'name': data['Tags'][0]['Value'],
-                          'cidr_block': data['CidrBlock'], 'avail_zone': data['AvailabilityZone'] }
+            data_list = [{'subnet_id': data['SubnetId'], 'name': data['Tags'][0]['Value'] if 'Tags' in data.keys() else data['SubnetId'],
+                          'cidr_block': data['CidrBlock'], 'avail_zone': data['AvailabilityZone']}
                          for data in res_dict['Subnets']]
             result = {'code': '0', 'msg': 'success', 'count': count, 'data': data_list}
         except Exception as e:
