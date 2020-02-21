@@ -33,13 +33,11 @@
 
             <ul class="layui-nav right" lay-filter="">
                 <li class="layui-nav-item">
-                    <a href="javascript:;">admin</a>
+                    <a href="javascript:;">{{ username }}</a>
                     <dl class="layui-nav-child">
                         <!-- 二级菜单 -->
                         <dd>
-                            <a onclick="xadmin.open('个人信息','http://www.baidu.com')">个人信息</a></dd>
-                        <dd>
-                            <a onclick="xadmin.open('切换帐号','http://www.baidu.com')">切换帐号</a></dd>
+                            <a onclick="xadmin.open('个人信息','/UserInfo/',600,400)">个人信息</a></dd>
                         <dd>
                             <a href="/Logout">退出</a></dd>
                     </dl>
@@ -108,24 +106,9 @@
                             <i class="iconfont nav_right">&#xe697;</i></a>
                         <ul class="sub-menu">
                             <li>
-                                <a onclick="xadmin.add_tab('管理员列表','admin-list.html')">
+                                <a onclick="xadmin.add_tab('管理员列表','/AdminAccount/')">
                                     <i class="iconfont">&#xe6a7;</i>
                                     <cite>管理员列表</cite></a>
-                            </li>
-                            <li>
-                                <a onclick="xadmin.add_tab('角色管理','admin-role.html')">
-                                    <i class="iconfont">&#xe6a7;</i>
-                                    <cite>角色管理</cite></a>
-                            </li>
-                            <li>
-                                <a onclick="xadmin.add_tab('权限分类','admin-cate.html')">
-                                    <i class="iconfont">&#xe6a7;</i>
-                                    <cite>权限分类</cite></a>
-                            </li>
-                            <li>
-                                <a onclick="xadmin.add_tab('权限管理','admin-rule.html')">
-                                    <i class="iconfont">&#xe6a7;</i>
-                                    <cite>权限管理</cite></a>
                             </li>
                         </ul>
                     </li>

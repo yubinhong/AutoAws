@@ -19,9 +19,9 @@
         <div class="x-nav">
           <span class="layui-breadcrumb">
             <a href="">首页</a>
-            <a href="">演示</a>
+            <a href="">管理员管理</a>
             <a>
-              <cite>导航元素</cite></a>
+              <cite>管理员列表</cite></a>
           </span>
           <a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" onclick="location.reload()" title="刷新">
             <i class="layui-icon layui-icon-refresh" style="line-height:30px"></i></a>
@@ -48,63 +48,9 @@
                         </div>
                         <div class="layui-card-header">
                             <button class="layui-btn layui-btn-danger" onclick="delAll()"><i class="layui-icon"></i>批量删除</button>
-                            <button class="layui-btn" onclick="xadmin.open('添加用户','./admin-add.html',600,400)"><i class="layui-icon"></i>添加</button>
+                            <button class="layui-btn" onclick="xadmin.open('添加用户','/AdminAccountAdd/',600,400)"><i class="layui-icon"></i>添加</button>
                         </div>
-                        <div class="layui-card-body ">
-                            <table class="layui-table layui-form">
-                              <thead>
-                                <tr>
-                                  <th>
-                                    <input type="checkbox" name=""  lay-skin="primary">
-                                  </th>
-                                  <th>ID</th>
-                                  <th>登录名</th>
-                                  <th>手机</th>
-                                  <th>邮箱</th>
-                                  <th>角色</th>
-                                  <th>加入时间</th>
-                                  <th>状态</th>
-                                  <th>操作</th>
-                              </thead>
-                              <tbody>
-                                <tr>
-                                  <td>
-                                    <input type="checkbox" name=""  lay-skin="primary">
-                                  </td>
-                                  <td>1</td>
-                                  <td>admin</td>
-                                  <td>18925139194</td>
-                                  <td>113664000@qq.com</td>
-                                  <td>超级管理员</td>
-                                  <td>2017-01-01 11:11:42</td>
-                                  <td class="td-status">
-                                    <span class="layui-btn layui-btn-normal layui-btn-mini">已启用</span></td>
-                                  <td class="td-manage">
-                                    <a onclick="member_stop(this,'10001')" href="javascript:;"  title="启用">
-                                      <i class="layui-icon">&#xe601;</i>
-                                    </a>
-                                    <a title="编辑"  onclick="xadmin.open('编辑','admin-edit.html')" href="javascript:;">
-                                      <i class="layui-icon">&#xe642;</i>
-                                    </a>
-                                    <a title="删除" onclick="member_del(this,'要删除的id')" href="javascript:;">
-                                      <i class="layui-icon">&#xe640;</i>
-                                    </a>
-                                  </td>
-                                </tr>
-                              </tbody>
-                            </table>
-                        </div>
-                        <div class="layui-card-body ">
-                            <div class="page">
-                                <div>
-                                  <a class="prev" href="">&lt;&lt;</a>
-                                  <a class="num" href="">1</a>
-                                  <span class="current">2</span>
-                                  <a class="num" href="">3</a>
-                                  <a class="num" href="">489</a>
-                                  <a class="next" href="">&gt;&gt;</a>
-                                </div>
-                            </div>
+                        <div class="layui-card-body" id="admin" lay-filter="admin">
                         </div>
                     </div>
                 </div>
@@ -112,9 +58,8 @@
         </div> 
     </body>
     <script>
-      layui.use(['laydate','form'], function(){
-        var laydate = layui.laydate;
-        var form = layui.form;
+      layui.use(['laydate','form', 'table'], function(){
+        let laydate = layui.laydate, form = layui.form, table = layui.table;
         
         //执行一个laydate实例
         laydate.render({
@@ -125,40 +70,130 @@
         laydate.render({
           elem: '#end' //指定元素
         });
-      });
 
-       /*用户-停用*/
-      function member_stop(obj,id){
-          layer.confirm('确认要停用吗？',function(index){
 
-              if($(obj).attr('title')=='启用'){
 
-                //发异步把用户状态进行更改
-                $(obj).attr('title','停用')
-                $(obj).find('i').html('&#xe62f;');
+        table.render({
+          elem: '#admin'
+          , height: 600
+          , url: '/AdminAccount/' //数据接口
+          , method: 'post'  //
+          , page: true //开启分页
+          , cols: [[ //表头
+              {checkbox: true}
+              , {field: 'id', title: 'ID'}
+              , {field: 'username', title: '登录名'}
+              , {field: 'email', title: '邮箱'}
+              , {field: 'create_time', title: '创建时间'}
+              , {field: 'is_superuser', title: '超级管理员'}
+              , {title: '操作', align: 'center', toolbar: '#bar'}
+          ]]
+        });
+        table.on('tool(admin)', function (obj) { //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+              let data = obj.data; //获得当前行数据
+              let layEvent = obj.event; //获得 lay-event 对应的值
+              let tr = obj.tr; //获得当前行 tr 的DOM对象
 
-                $(obj).parents("tr").find(".td-status").find('span').addClass('layui-btn-disabled').html('已停用');
-                layer.msg('已停用!',{icon: 5,time:1000});
+              if (layEvent === 'del') { //删除
+                  layer.confirm('真的删除行么', function (index) {
+                      obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+                      layer.close(index);
+                      //向服务端发送删除指令
+                      $.post(
+                          "/AdminAccountDel/",
+                          data,
+                          function (res) {
+                              layer.msg(res.message, {time: 2000});
+                          },
+                          'json'
+                      );
+                  });
+              } else if (layEvent === 'edit') { //编辑
+                  //do something
+                  let htmlData = '<div class="layui-fluid">\n' +
+                      '            <div class="layui-row">\n' +
+                      '                <form class="layui-form">\n' +
+                      '                  <div class="layui-form-item">\n' +
+                      '                      <label for="username" class="layui-form-label">\n' +
+                      '                          <span class="x-red">*</span>登录名\n' +
+                      '                      </label>\n' +
+                      '                      <div class="layui-input-inline">\n' +
+                      '                          <input type="text" id="username" name="username" readonly="readonly" value="' + data.username+'"required="" lay-verify="required"\n' +
+                      '                          autocomplete="off" class="layui-input">\n' +
+                      '                      </div>\n' +
+                      '                  </div>\n' +
+                      '                  <div class="layui-form-item">\n' +
+                      '                      <label for="L_email" class="layui-form-label">\n' +
+                      '                          <span class="x-red">*</span>邮箱\n' +
+                      '                      </label>\n' +
+                      '                      <div class="layui-input-inline">\n' +
+                      '                          <input type="text" id="L_email" name="email" required="" value="' + data.email + '"lay-verify="email"\n' +
+                      '                          autocomplete="off" class="layui-input">\n' +
+                      '                      </div>\n' +
+                      '                      <div class="layui-form-mid layui-word-aux">\n' +
+                      '                          <span class="x-red">*</span>\n' +
+                      '                      </div>\n' +
+                      '                  </div>\n' +
+                      '                  <div class="layui-form-item">\n' +
+                      '                      <label for="L_pass" class="layui-form-label">\n' +
+                      '                          <span class="x-red">*</span>密码\n' +
+                      '                      </label>\n' +
+                      '                      <div class="layui-input-inline">\n' +
+                      '                          <input type="password" id="L_pass" name="pass" required="" lay-verify="pass"\n' +
+                      '                          autocomplete="off" class="layui-input">\n' +
+                      '                      </div>\n' +
+                      '                  </div>\n' +
+                      '              </form>\n' +
+                      '            </div>\n' +
+                      '        </div>';
+                  layer.open({
+                      title: "更新",
+                      area: ["400px", "400px"],
+                      type: 1,
+                      content: htmlData,//把数据显示在弹出层上
+                      btn: ['确定', '我再想想'],
+                      success: function (layero, index){
+                        $(':focus').blur();
+                        // 添加form标识
+                        layero.addClass('layui-form');
+                        // 将保存按钮改变成提交按钮
+                        layero.find('.layui-layer-btn0').attr({
+                            'lay-filter': 'update',
+                            'lay-submit': ''
+                        });
 
-              }else{
-                $(obj).attr('title','启用')
-                $(obj).find('i').html('&#xe601;');
-
-                $(obj).parents("tr").find(".td-status").find('span').removeClass('layui-btn-disabled').html('已启用');
-                layer.msg('已启用!',{icon: 5,time:1000});
+                        form.verify({
+                            pass: [/(.+){6,12}$/, '密码必须6到12位']
+                        });
+                      },
+                      yes: function (index, layero) {//改完，点击确定
+                          form.on('submit(update)', function (data) {
+                              let username = layero.find("#username").val();//获得修改后的值
+                              let re_email = layero.find("#L_email").val();
+                              let re_pass = layero.find("#L_pass").val();
+                              console.log(re_email);
+                              //同步更新缓存对应的值
+                              $.post(
+                                  "/AdminAccountUpdate/",
+                                  {username: username, email: re_email,pass: re_pass},
+                                  function (res) {
+                                      layer.msg(res.message, {time: 2000});
+                                      if (res.code === 0) {
+                                          obj.update({
+                                              email: re_email,
+                                          });
+                                          layer.close(index);
+                                      }
+                                  },
+                                  'json'
+                              );
+                          });
+                      }
+                  });
               }
-              
           });
-      }
 
-      /*用户-删除*/
-      function member_del(obj,id){
-          layer.confirm('确认要删除吗？',function(index){
-              //发异步删除数据
-              $(obj).parents("tr").remove();
-              layer.msg('已删除!',{icon:1,time:1000});
-          });
-      }
+      });
 
 
 
@@ -173,10 +208,9 @@
         });
       }
     </script>
-    <script>var _hmt = _hmt || []; (function() {
-        var hm = document.createElement("script");
-        hm.src = "https://hm.baidu.com/hm.js?b393d153aeb26b46e9431fabaf0f6190";
-        var s = document.getElementsByTagName("script")[0];
-        s.parentNode.insertBefore(hm, s);
-      })();</script>
+    <script type="text/html" id="bar">
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+
+    </script>
 </html>

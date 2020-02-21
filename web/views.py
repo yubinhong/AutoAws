@@ -1,11 +1,13 @@
 from django.shortcuts import render, redirect, HttpResponse
 from backend.security import login_required
+from backend.security import user_is_superuser
 from backend.ec2 import AwsEc2
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.decorators.csrf import csrf_exempt
 from web import models
 import json
+from django.contrib.auth.models import User
 
 # Create your views here.
 
@@ -40,7 +42,7 @@ def my_logout(request):
 @login_required
 def index(request):
     if request.method == 'GET':
-        return render(request, 'X-admin/index.html')
+        return render(request, 'X-admin/index.html', {'username': request.user.username})
 
 
 @csrf_exempt
@@ -50,8 +52,8 @@ def aws_account(request):
     if request.method == 'GET':
         return render(request, 'X-admin/account-list.html')
     elif request.method == 'POST':
-        page = int(request.POST.get('page',1))
-        limit = int(request.POST.get('limit',10))
+        page = int(request.POST.get('page', 1))
+        limit = int(request.POST.get('limit', 10))
         count = models.AwsAccount.objects.all().count()
         data_list = models.AwsAccount.objects.all()[limit * (page - 1):limit * page]
         data_list = [{'id': data.pk, 'name': data.name, 'access_key': data.access_key, 'secret_key': data.secret_key,
@@ -338,7 +340,6 @@ def server_deploy(request):
 
 
 @csrf_exempt
-@xframe_options_exempt
 @login_required
 def vpc(request):
     if request.method == 'POST':
@@ -358,7 +359,6 @@ def vpc(request):
 
 
 @csrf_exempt
-@xframe_options_exempt
 @login_required
 def subnet(request):
     if request.method == 'POST':
@@ -376,4 +376,99 @@ def subnet(request):
         except Exception as e:
             print(e)
             result = {"code": '0', 'msg': 'success', 'count': 0, 'data': []}
+        return HttpResponse(json.dumps(result))
+
+
+@csrf_exempt
+@xframe_options_exempt
+@login_required
+@user_is_superuser
+def admin_account(request):
+    if request.method == 'GET':
+        return render(request, 'X-admin/admin-list.html')
+    elif request.method == 'POST':
+        page = int(request.POST.get('page', 1))
+        limit = int(request.POST.get('limit', 10))
+        count = User.objects.all().count()
+        user_list = User.objects.all()[limit * (page - 1):limit * page]
+        user_list = [{'id': user.pk, 'username': user.username, 'email': user.email,
+                      'create_time': user.date_joined.strftime("%Y-%m-%d %H:%M:%S"),
+                      'is_superuser': user.is_superuser} for user in user_list]
+        result = {'code': '0', 'msg': 'success', 'count': count, 'data': user_list}
+        return HttpResponse(json.dumps(result))
+
+
+@csrf_exempt
+@xframe_options_exempt
+@login_required
+@user_is_superuser
+def admin_account_add(request):
+    if request.method == 'GET':
+        return render(request, 'X-admin/admin-add.html')
+    elif request.method == 'POST':
+        username = request.POST['username']
+        email = request.POST['email']
+        passwd = request.POST['pass']
+        is_superuser = int(request.POST['is_superuser'])
+        try:
+            if is_superuser:
+                User.objects.create_superuser(username=username, email=email, password=passwd).save()
+            else:
+                User.objects.create_user(username=username, email=email, password=passwd).save()
+            result = {'message': "添加成功！"}
+        except Exception as e:
+            result = {"message": "添加失败！"}
+        return HttpResponse(json.dumps(result))
+
+
+@csrf_exempt
+@login_required
+@user_is_superuser
+def admin_account_del(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        try:
+            User.objects.get(username=username).delete()
+            result = {'message': "删除成功！"}
+        except Exception as e:
+            result = {"message": "删除失败！"}
+        return HttpResponse(json.dumps(result))
+
+
+@csrf_exempt
+@login_required
+@user_is_superuser
+def admin_account_update(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        re_email = request.POST['email']
+        re_pass = request.POST['pass']
+
+        try:
+            user_obj = User.objects.get(username=username)
+            user_obj.email = re_email
+            user_obj.set_password(re_pass)
+            user_obj.save()
+            result = {'message': "更新成功！", 'code': 0}
+        except Exception as e:
+            result = {"message": "更新失败！", 'code': 1}
+        return HttpResponse(json.dumps(result))
+
+
+@csrf_exempt
+@xframe_options_exempt
+@login_required
+def user_info(request):
+    if request.method == 'GET':
+        return render(request, 'X-admin/user-info.html', {'username': request.user.username, 'email': request.user.email})
+    elif request.method == 'POST':
+        re_email = request.POST['email']
+        re_pass = request.POST['pass']
+        try:
+            request.user.email = re_email
+            request.user.set_password(re_pass)
+            request.user.save()
+            result = {'message': "更新成功！", 'code': 0}
+        except Exception as e:
+            result = {"message": "更新失败！", 'code': 1}
         return HttpResponse(json.dumps(result))
