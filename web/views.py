@@ -340,6 +340,35 @@ def server_deploy(request):
 
 
 @csrf_exempt
+@xframe_options_exempt
+@login_required
+def server_add(request):
+    if request.method == 'POST':
+        instance_dict = {}
+        account = request.POST['account']
+        vpc_id = request.POST['vpc']
+        subnet_id = request.POST['subnet']
+        instance_dict['name'] = request.POST['name']
+        instance_dict['instance_type'] = request.POST['instance_type']
+        instance_dict['disk'] = int(request.POST['disk'])
+        instance_dict['image_id'] = request.POST['image_id']
+        instance_dict['key_name'] = request.POST['key_name']
+        instance_dict['count'] = int(request.POST['count'])
+        try:
+            account_obj = models.AwsAccount.objects.get(name=account)
+            client = AwsEc2(account_obj.access_key, account_obj.secret_key)
+            res = client.create_instance(instance_dict=instance_dict, vpc_id=vpc_id, subnet_id=subnet_id)
+            if res['code'] == 0:
+                result = {'code': 0, 'message': "添加成功！"}
+            else:
+                result = {'code': 1, 'message': res['msg']}
+        except Exception as e:
+            print(e)
+            result = {'code': 1, 'msg': "添加失败！"}
+        return HttpResponse(json.dumps(result))
+
+
+@csrf_exempt
 @login_required
 def vpc(request):
     if request.method == 'POST':

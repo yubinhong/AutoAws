@@ -69,14 +69,19 @@ class AwsEc2(object):
         )
         return res
 
+    def security_group(self, name, vpc_id):
+        try:
+            res = self.create_security_group(name, vpc_id)
+            print(e)
+        except Exception as e:
+            res = self.get_security_group(name)['SecurityGroups'][0]
+
+        return res
+
     def create_instance_from_template(self, instance_template_list, vpc_id, subnet_id):
         res_list = []
         for instance_template in instance_template_list:
-            try:
-                res1 = self.create_security_group(instance_template['name'], vpc_id)
-                print(e)
-            except Exception as e:
-                res1 = self.get_security_group(instance_template['name'])['SecurityGroups'][0]
+            res1 = self.security_group(instance_template['name'], vpc_id)
             res = self.resource.create_instances(
                 BlockDeviceMappings=[
                     {
@@ -124,41 +129,41 @@ class AwsEc2(object):
         return res_list
 
     def create_instance(self, instance_dict, vpc_id, subnet_id):
+        res1 = self.security_group(instance_dict['name'], vpc_id)
         try:
-            res1 = self.create_security_group(instance_dict['name'], vpc_id)
+            res = self.resource.create_instances(
+                BlockDeviceMappings=[
+                    {
+                        'DeviceName': '/dev/sda1',
+                        'Ebs': {
+                            'DeleteOnTermination': False,
+                            'VolumeSize': instance_dict['disk'],
+                            'VolumeType': 'gp2',
+                            'Encrypted': False
+                        }
+                    },
+                ],
+                ImageId=instance_dict['image_id'],
+                InstanceType=instance_dict['instance_type'],
+                KeyName=instance_dict['key_name'],
+                NetworkInterfaces=[
+                    {
+                        'AssociatePublicIpAddress': True,
+                        'DeleteOnTermination': True,
+                        'DeviceIndex': 0,
+                        'Groups': [
+                            res1['GroupId'],
+                        ],
+                        'SubnetId': subnet_id,
+                        'InterfaceType': 'interface'
+                    },
+                ],
+                MaxCount=instance_dict['count'],
+                MinCount=instance_dict['count'],
+            )
         except Exception as e:
-            print(e)
-            res1 = self.get_security_group(instance_dict['name'])['SecurityGroups'][0]
-        res = self.resource.create_instances(
-            BlockDeviceMappings=[
-                {
-                    'DeviceName': '/dev/sda1',
-                    'Ebs': {
-                        'DeleteOnTermination': False,
-                        'VolumeSize': instance_dict['disk'],
-                        'VolumeType': 'gp2',
-                        'Encrypted': False
-                    }
-                },
-            ],
-            ImageId=instance_dict['image_id'],
-            InstanceType=instance_dict['instance_type'],
-            KeyName=instance_dict['key_name'],
-            NetworkInterfaces=[
-                {
-                    'AssociatePublicIpAddress': True,
-                    'DeleteOnTermination': True,
-                    'DeviceIndex': 0,
-                    'Groups': [
-                        res1['GroupId'],
-                    ],
-                    'SubnetId': subnet_id,
-                    'InterfaceType': 'interface'
-                },
-            ],
-            MaxCount=instance_dict['count'],
-            MinCount=instance_dict['count'],
-        )
+            result = {'code': 1, 'msg': str(e)}
+            return result
         for instance in res:
             status = instance.state
             while status['Code'] != 16:
@@ -172,7 +177,8 @@ class AwsEc2(object):
                         'Value': instance_dict['name']
                     }]
                 )
-        return res
+        result = {'code': 0}
+        return result
 
 
 if __name__ == "__main__":

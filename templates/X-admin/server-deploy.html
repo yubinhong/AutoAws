@@ -116,7 +116,7 @@
                   dataType: 'json',
                   success: function(res){
                       let data = res.data;
-                      $('subnet').empty();
+                      $('#subnet').empty();
                       $('#subnet').append('<option value="" selected="true" disabled="disabled">---请选择subnet---</option>');
                       $.each(data, function (index, item) {
                         $('#subnet').append('<option value="'+item.subnet_id+'">'+item.avail_zone+'</option>')

@@ -33,17 +33,20 @@
                         <div class="layui-card-body ">
                             <form class="layui-form layui-col-space5">
                                 <div class="layui-input-inline layui-show-xs-block">
-                                    <select name="account" lay-filter="account" id="account">
+                                    <select name="account" lay-filter="account" id="account" required="" lay-verify="required">
                                     </select>
                                 </div>
                                 <div class="layui-input-inline layui-show-xs-block">
-                                    <select name="vpc" lay-filter="vpc" id="vpc">
+                                    <select name="vpc" lay-filter="vpc" id="vpc" required="" lay-verify="required">
                                     </select>
                                 </div>
+                                <div class="layui-inline layui-show-xs-block">
+                                    <button class="layui-btn"  lay-submit="" lay-filter="search"><i class="layui-icon">&#xe615;</i></button>
+                                </div>
+                                <div class="layui-inline layui-show-xs-block">
+                                    <button class="layui-btn"  lay-submit="" lay-filter="add"><i class="layui-icon"></i>添加服务器</button>
+                                </div>
                             </form>
-                        </div>
-                        <div class="layui-card-header">
-                            <button class="layui-btn" onclick="xadmin.open('添加服务器','/ServerAdd/',400,600)"><i class="layui-icon"></i>添加</button>
                         </div>
 
                         <div class="layui-card-body " id="server" lay-filter="server" lay-data="{id: 'server'}">
@@ -55,10 +58,26 @@
         </div> 
     </body>
     <script>
-      layui.use(['table', 'form'], function() {
-          let table = layui.table;
+      layui.use(['table', 'form', 'layer'], function() {
+          let table = layui.table, layer =layui.layer;
           let form = layui.form;
 
+          form.verify({
+            required:function (value,item) {
+                let msg="必填项不能为空";
+                value= $.trim(value);
+                let isEmpty=!value || value.length<1;
+               // 当前验证元素是select且为空时,将页面定位至layui渲染的select处，或自定义想定位的位置
+                if(item.tagName=='SELECT' && isEmpty){
+                    $("html").animate({
+                        scrollTop:$(item).siblings(".layui-form-select").offset().top-74
+                    },50);
+                }
+                if(isEmpty){
+                    return msg;
+                }
+            }
+          });
           $.ajax({
                   type: 'post',
                   url: '/AwsAccount/',
@@ -73,12 +92,14 @@
                   }
                 });
           form.on('select(account)', function (data) {
+              var index = layer.load(1);
               $.ajax({
                   type: 'post',
                   url: '/Vpc/',
                   data: {'account': $('#account').val()},
                   dataType: 'json',
                   success: function(res){
+                      layer.close(index);
                       let data = res.data;
                       $('#vpc').empty();
                       $('#vpc').append('<option value="" selected="true" disabled="disabled">---请选择vpc---</option>');
@@ -89,7 +110,8 @@
                   }
                 });
           });
-          form.on('select(vpc)', function (data) {
+
+          form.on('submit(search)', function (data) {
             table.reload('server',{
                 url: '/Server/',
                 where: {account: $('#account').val(), vpc: $('#vpc').val()},
@@ -98,6 +120,141 @@
                 },
                 loading: true
             });
+            return false;
+          });
+
+          form.on('submit(add)', function (data){
+              let htmlData = '        <div class="layui-fluid">\n' +
+                  '            <div class="layui-row">\n' +
+                  '                <form class="layui-form">\n' +
+                  '                    <div class="layui-form-item">\n' +
+                  '                      <label for="name" class="layui-form-label">\n' +
+                  '                          <span class="x-red">*</span>实例名称\n' +
+                  '                      </label>\n' +
+                  '                      <div class="layui-input-inline">\n' +
+                  '                          <input type="text" id="name" name="name" required="" lay-verify="required"\n' +
+                  '                          autocomplete="off" class="layui-input">\n' +
+                  '                      </div>\n' +
+                  '                    </div>\n' +
+                  '                    <div class="layui-form-item">\n' +
+                  '                      <label for="name" class="layui-form-label">\n' +
+                  '                          <span class="x-red">*</span>实例类型\n' +
+                  '                      </label>\n' +
+                  '                      <div class="layui-input-inline">\n' +
+                  '                          <input type="text" id="instance_type" name="instance_type" required="" lay-verify="required"\n' +
+                  '                          autocomplete="off" class="layui-input">\n' +
+                  '                      </div>\n' +
+                  '                    </div>\n' +
+                  '                    <div class="layui-form-item">\n' +
+                  '                      <label for="name" class="layui-form-label">\n' +
+                  '                          <span class="x-red">*</span>硬盘大小(GB)\n' +
+                  '                      </label>\n' +
+                  '                      <div class="layui-input-inline">\n' +
+                  '                          <input type="text" id="disk" name="disk" required="" lay-verify="required"\n' +
+                  '                          autocomplete="off" class="layui-input">\n' +
+                  '                      </div>\n' +
+                  '                    </div>\n' +
+                  '                    <div class="layui-form-item">\n' +
+                  '                      <label for="name" class="layui-form-label">\n' +
+                  '                          <span class="x-red">*</span>AMI\n' +
+                  '                      </label>\n' +
+                  '                      <div class="layui-input-inline">\n' +
+                  '                        <select name="image_id" id="image_id" required="" lay-verify="required">\n' +
+                  '                            <option value="ami-045f38c93733dd48d">Centos 7</option>\n' +
+                  '                            <option value="ami-0c0f945615e3d22a3">Ubuntu 18.04</option>\n' +
+                  '                        </select>\n' +
+                  '                      </div>\n' +
+                  '                    </div>\n' +
+                  '                    <div class="layui-form-item">\n' +
+                  '                      <label for="name" class="layui-form-label">\n' +
+                  '                          <span class="x-red">*</span>Subnet\n' +
+                  '                      </label>\n' +
+                  '                      <div class="layui-input-inline">\n' +
+                  '                        <select name="subnet" id="subnet" required="" lay-verify="required">\n' +
+                  '                        </select>\n' +
+                  '                      </div>\n' +
+                  '                    </div>\n' +
+                  '                    <div class="layui-form-item">\n' +
+                  '                      <label for="name" class="layui-form-label">\n' +
+                  '                          <span class="x-red">*</span>密钥对\n' +
+                  '                      </label>\n' +
+                  '                      <div class="layui-input-inline">\n' +
+                  '                          <input type="text" id="key_name" name="key_name" required="" lay-verify="required"\n' +
+                  '                          autocomplete="off" class="layui-input">\n' +
+                  '                      </div>\n' +
+                  '                    </div>\n' +
+                  '                    <div class="layui-form-item">\n' +
+                  '                      <label for="name" class="layui-form-label">\n' +
+                  '                          <span class="x-red">*</span>数量\n' +
+                  '                      </label>\n' +
+                  '                      <div class="layui-input-inline">\n' +
+                  '                          <input type="text" id="count" name="count" required="" lay-verify="required"\n' +
+                  '                          autocomplete="off" class="layui-input">\n' +
+                  '                      </div>\n' +
+                  '                    </div>\n' +
+                  '              </form>\n' +
+                  '            </div>\n' +
+                  '        </div>';
+              var index = layer.open({
+                  title: "添加实例",
+                  area: ["400px", "500px"],
+                  type: 1,
+                  content: htmlData,//把数据显示在弹出层上
+                  btn: ['确定', '我再想想'],
+                  success: function (layero, index) {
+                      var index1 = layer.load(1);
+                      $.ajax({
+                          type: 'post',
+                          url: '/Subnet/',
+                          data: {'account': $('#account').val(), 'vpc': $('#vpc').val()},
+                          dataType: 'json',
+                          success: function(res){
+                              layer.close(index1);
+                              let data = res.data;
+                              $('#subnet').empty();
+                              $.each(data, function (index, item) {
+                                $('#subnet').append('<option value="'+item.subnet_id+'">'+item.avail_zone+'</option>')
+                              });
+                              form.render('select');
+                          }
+                      });
+
+
+                  },
+                  yes: function (index, layero) {//改完，点击确定
+                      let account = $('#account').val();
+                      let vpc = $('#vpc').val();
+                      let subnet = $('#subnet').val();
+                      let name = layero.find("#name").val();//获得修改后的值
+                      let instance_type = layero.find("#instance_type").val();
+                      let disk = layero.find("#disk").val();
+                      let image_id = layero.find("#image_id").val();
+                      let key_name = layero.find("#key_name").val();
+                      let count = layero.find("#count").val();
+
+                      var index2 = layer.load(1);
+                      //同步更新缓存对应的值
+                      $.post(
+                          "/ServerAdd/",
+                          {account: account, vpc: vpc, subnet: subnet, name: name, instance_type: instance_type,
+                              disk: disk,image_id: image_id, key_name: key_name, count: count},
+                          function (res) {
+
+                              if (res.code === 0) {
+                                  layer.msg(res.message, {time: 2000});
+                                  layer.close(index);
+                              } else {
+                                  layer.alert(res.message);
+                              }
+                              layer.close(index2);
+
+
+                          },
+                          'json'
+                      );
+                  }
+              });
+              return false;
           });
           table.render({
               elem: '#server'
