@@ -37,9 +37,14 @@
                     <dl class="layui-nav-child">
                         <!-- 二级菜单 -->
                         <dd>
-                            <a onclick="xadmin.open('个人信息','/UserInfo/',600,400)">个人信息</a></dd>
+                            <a onclick="xadmin.open('个人信息','/UserInfo/',600,400)">个人信息</a>
+                        </dd>
                         <dd>
-                            <a href="/Logout">退出</a></dd>
+                            <a onclick="xadmin.open('绑定google验证码','/Bind2faAuth/',600,400)">绑定google验证码</a>
+                        </dd>
+                        <dd>
+                            <a href="/Logout">退出</a>
+                        </dd>
                     </dl>
                 </li>
             </ul>
@@ -65,7 +70,7 @@
                     </li>
                     <li>
                         <a href="javascript:;">
-                            <i class="iconfont left-nav-li" lay-tips="模版管理">&#xe6da;</i>
+                            <i class="iconfont left-nav-li" lay-tips="模版管理">&#xe74a;</i>
                             <cite>模版管理</cite>
                             <i class="iconfont nav_right">&#xe697;</i></a>
                         <ul class="sub-menu">
@@ -96,6 +101,24 @@
                                 <a onclick="xadmin.add_tab('服务器部署','/ServerDeploy/')">
                                     <i class="iconfont">&#xe6a7;</i>
                                     <cite>服务器部署</cite></a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="javascript:;">
+                            <i class="iconfont left-nav-li" lay-tips="s3管理">&#xe70c;</i>
+                            <cite>s3管理</cite>
+                            <i class="iconfont nav_right">&#xe697;</i></a>
+                        <ul class="sub-menu">
+                            <li>
+                                <a onclick="xadmin.add_tab('bucket列表','/Bucket/')">
+                                    <i class="iconfont">&#xe6a7;</i>
+                                    <cite>bucket列表</cite></a>
+                            </li>
+                            <li>
+                                <a onclick="xadmin.add_tab('对象管理','/BucketManage/')">
+                                    <i class="iconfont">&#xe6a7;</i>
+                                    <cite>对象管理</cite></a>
                             </li>
                         </ul>
                     </li>

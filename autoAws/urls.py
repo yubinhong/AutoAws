@@ -43,6 +43,9 @@ urlpatterns = [
     path('AdminAccountAdd/', views.admin_account_add),
     path('AdminAccountDel/', views.admin_account_del),
     path('AdminAccountUpdate/', views.admin_account_update),
-    path('UserInfo/', views.user_info)
+    path('UserInfo/', views.user_info),
+    path('Bucket/', views.bucket),
+    path('BucketManage/', views.bucket_manage),
+    path('Bind2faAuth/', views.bind_2fa_auth)
 
 ]

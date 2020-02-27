@@ -1,13 +1,19 @@
-from django.shortcuts import render, redirect, HttpResponse
-from backend.security import login_required
-from backend.security import user_is_superuser
-from backend.ec2 import AwsEc2
+import json
+
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from django.shortcuts import render, redirect, HttpResponse
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.decorators.csrf import csrf_exempt
+from django_google_auth2.google.bindgoogleauth.bindgoogleauth import bind_google_auth
+from django_google_auth2 import models as auth_models
+
+from backend.ec2 import AwsEc2
+from backend.s3 import AwsS3
+from backend.security import login_required
+from backend.security import user_is_superuser
 from web import models
-import json
-from django.contrib.auth.models import User
+
 
 # Create your views here.
 
@@ -56,7 +62,7 @@ def aws_account(request):
         limit = int(request.POST.get('limit', 10))
         count = models.AwsAccount.objects.all().count()
         data_list = models.AwsAccount.objects.all()[limit * (page - 1):limit * page]
-        data_list = [{'id': data.pk, 'name': data.name, 'access_key': data.access_key, 'secret_key': data.secret_key,
+        data_list = [{'id': data.pk, 'name': data.name, 'access_key': data.access_key,
                       'create_time': data.create_time.strftime("%Y-%m-%d %H:%M:%S")}
                      for data in data_list]
         result = {'code': '0', 'msg': 'success', 'count': count, 'data': data_list}
@@ -501,3 +507,66 @@ def user_info(request):
         except Exception as e:
             result = {"message": "更新失败！", 'code': 1}
         return HttpResponse(json.dumps(result))
+
+
+@csrf_exempt
+@xframe_options_exempt
+@login_required
+def bucket(request):
+    if request.method == 'GET':
+        return render(request, 'X-admin/bucket-list.html')
+    elif request.method == 'POST':
+        page = int(request.POST.get('page', 1))
+        limit = int(request.POST.get('limit', 10))
+        account = request.POST['account']
+        try:
+            account_obj = models.AwsAccount.objects.get(name=account)
+            client = AwsS3(account_obj.access_key, account_obj.secret_key)
+            res_dict = client.get_buckets()
+            res_list = res_dict['Buckets']
+            count = len(res_list)
+            data_list = [{'name': data['Name'], 'create_time': data['CreationDate'].strftime("%Y-%m-%d %H:%M:%S")}
+                         for data in res_list[limit * (page - 1):limit * page]]
+            result = {'code': '0', 'msg': 'success', 'count': count, 'data': data_list}
+        except Exception as e:
+            print(e)
+            result = {"code": '1', "msg": "获取失败！"}
+        return HttpResponse(json.dumps(result))
+
+
+@csrf_exempt
+@xframe_options_exempt
+@login_required
+def bucket_manage(request):
+    if request.method == 'GET':
+        return render(request, 'X-admin/bucket-manage.html')
+    elif request.method == 'POST':
+        page = int(request.POST.get('page', 1))
+        limit = int(request.POST.get('limit', 10))
+        account = request.POST['account']
+        bucket = request.POST['bucket']
+        try:
+            account_obj = models.AwsAccount.objects.get(name=account)
+            client = AwsS3(account_obj.access_key, account_obj.secret_key)
+            res_dict = client.list_objects(bucket)
+            res_list = res_dict['Contents']
+            count = len(res_list)
+            data_list = [{'object': data['Key'], 'last_modified': data['LastModified'].strftime("%Y-%m-%d %H:%M:%S"),
+                          'size': data['Size']}
+                         for data in res_list[limit * (page - 1):limit * page]]
+            result = {'code': '0', 'msg': 'success', 'count': count, 'data': data_list}
+        except Exception as e:
+            print(e)
+            result = {"code": '1', "msg": "获取失败！"}
+        return HttpResponse(json.dumps(result))
+
+
+@csrf_exempt
+@xframe_options_exempt
+@login_required
+def bind_2fa_auth(request):
+    data = bind_google_auth(request.user.username)
+    status = data["success"]
+    if not status:
+        return HttpResponse(data["data"])
+    return render(request, '/X-admin/bind-google-auth.html', {"qr_code": data["data"]})

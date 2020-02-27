@@ -47,7 +47,6 @@
                             </form>
                         </div>
                         <div class="layui-card-header">
-                            <button class="layui-btn layui-btn-danger" onclick="delAll()"><i class="layui-icon"></i>批量删除</button>
                             <button class="layui-btn" onclick="xadmin.open('添加账号','/AwsAccountAdd/',400,300)"><i class="layui-icon"></i>添加</button>
                         </div>
                         <div class="layui-card-body "id="account" lay-filter="account">
@@ -85,7 +84,6 @@
               , {field: 'id', title: 'ID'}
               , {field: 'name', title: 'AWS账号名称'}
               , {field: 'access_key', title: '公钥'}
-              , {field: 'secret_key', title: '私钥'}
               , {field: 'create_time', title: '创建时间'}
               , {title: '操作', align: 'center', toolbar: '#bar'}
           ]]
@@ -139,7 +137,7 @@
                       '                      </label>\n' +
                       '                      <div class="layui-input-inline">\n' +
                       '                          <input type="password" id="Secret_Key" name="Secret_Key" required="" lay-verify="required"\n' +
-                      '                          autocomplete="off" class="layui-input" value="'+data.secret_key+'">\n' +
+                      '                          autocomplete="off" class="layui-input" value="">\n' +
                       '                      </div>\n' +
                       '                  </div>\n' +
                       '              </form>\n' +
@@ -165,8 +163,6 @@
                                       obj.update({
                                           name: rename,
                                           access_key: re_access_key,
-                                          secret_key: re_secret_key
-
                                       });
                                       layer.close(index);
                                   }

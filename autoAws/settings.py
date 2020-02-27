@@ -25,7 +25,7 @@ SECRET_KEY = 'x^ol*2naa6dxdfpg4kjhq2*6gjx^lr6(g!9n$r8-d359!0x*$x'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'web.apps.WebConfig',
+    'django_google_auth2',
 ]
 
 MIDDLEWARE = [
@@ -122,3 +123,5 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_AGE = 6 * 60 * 60
