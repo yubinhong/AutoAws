@@ -6,6 +6,8 @@ from django.shortcuts import render, redirect, HttpResponse
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.decorators.csrf import csrf_exempt
 from django_google_auth2.google.bindgoogleauth.bindgoogleauth import bind_google_auth
+from django_google_auth2.google.checkgoogleauth.checkgoogleauth import check_google_auth
+from django_google_auth2.google.deletegoogleauth.deletegoogleauth import delete_google_auth
 from django_google_auth2 import models as auth_models
 
 from backend.ec2 import AwsEc2
@@ -26,9 +28,13 @@ def my_login(request):
         username = request.POST['username']
         password = request.POST['password']
         user = authenticate(request, username=username, password=password)
+        is_google_auth = len(auth_models.DjangoGoogleAuthenticator2.objects.filter(username=username))
         if user is not None:
-            login(request, user)
-            result = {'status': 1, 'message': "登录成功"}
+            if is_google_auth:
+                result = {'status': 2, 'message': '二次验证'}
+            else:
+                login(request, user)
+                result = {'status': 1, 'message': "登录成功"}
         else:
             result = {'status': 0, 'message': "用户名或密码错误"}
         return HttpResponse(json.dumps(result))
@@ -40,6 +46,22 @@ def my_login(request):
             return render(request, "X-admin/login.html")
 
 
+@csrf_exempt
+def check_code(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        code = request.POST['code']
+        res = check_google_auth(username, code)
+        if res['success']:
+            login(request, user)
+            result = {'message': "登录成功", 'status': 1}
+        else:
+            result = {'message': "验证码错误", 'status': 0}
+        return HttpResponse(json.dumps(result))
+
+
 def my_logout(request):
     logout(request)
     return redirect("/Login/")
@@ -48,7 +70,9 @@ def my_logout(request):
 @login_required
 def index(request):
     if request.method == 'GET':
-        return render(request, 'X-admin/index.html', {'username': request.user.username})
+        username = request.user.username
+        is_google_auth = len(auth_models.DjangoGoogleAuthenticator2.objects.filter(username=username))
+        return render(request, 'X-admin/index.html', {'username': username, 'is_google_auth': is_google_auth})
 
 
 @csrf_exempt
@@ -569,4 +593,13 @@ def bind_2fa_auth(request):
     status = data["success"]
     if not status:
         return HttpResponse(data["data"])
-    return render(request, '/X-admin/bind-google-auth.html', {"qr_code": data["data"]})
+    return render(request, 'X-admin/bind-google-auth.html', {"qr_code": data["data"]})
+
+
+@csrf_exempt
+@login_required
+def delete_2fa_auth(request):
+    if request.method == 'POST':
+        username = request.POST.get('username', request.user.username)
+        res = delete_google_auth(username)
+        return HttpResponse(json.dumps(res))

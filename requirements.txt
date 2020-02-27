@@ -1,3 +1,4 @@
 django
 boto3
 django-google-auth2
+pyotp

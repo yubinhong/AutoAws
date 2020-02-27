@@ -39,9 +39,15 @@
                         <dd>
                             <a onclick="xadmin.open('个人信息','/UserInfo/',600,400)">个人信息</a>
                         </dd>
+                        {% if not is_google_auth %}
                         <dd>
-                            <a onclick="xadmin.open('绑定google验证码','/Bind2faAuth/',600,400)">绑定google验证码</a>
+                            <a onclick="xadmin.open('绑定两步验证','/Bind2faAuth/',200,200)">绑定两步验证</a>
                         </dd>
+                        {% else %}
+                        <dd>
+                            <a onclick="delete_2fa_auth(this, '/Delete2faAuth/')">解绑两步验证</a>
+                        </dd>
+                        {% endif %}
                         <dd>
                             <a href="/Logout">退出</a>
                         </dd>
@@ -208,5 +214,25 @@
         <!-- 中部结束 -->
 
     </body>
+    <script>
+        function delete_2fa_auth(obj, url){
+                layer.confirm('确认解绑两步验证吗？', {
+  		            icon: 3, title:'确认解绑',
+                    btn: ['确认', '取消']
+                }, function (index) {
+                     $.post(
+                            "/Delete2faAuth/",
+                            function(res){
+                                layer.msg(res.message, {time: 2000});
+                                //关闭当前frame
+                                layer.closeAll('dialog');
+                                 // 可以对父窗口进行刷新
 
+                            },
+                            'json'
+                    );
+                     xadmin.father_reload();
+                });
+            }
+    </script>
 </html>

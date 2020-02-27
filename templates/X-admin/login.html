@@ -47,11 +47,56 @@
                     "/Login/",
                     data.field,
                     function(res){
-                        if(res.status){
+                        if(res.status === 1){
                             layer.msg(res.message, {time: 2000});
                             const url="/";
                             setTimeout(window.location.href=url, 2000);
-                        }else{
+                        }
+                        if (res.status === 2){
+                            let htmlData = '<div class="layui-fluid">\n' +
+                  '            <div class="layui-row">\n' +
+                  '                <form class="layui-form">\n' +
+                  '                  <div class="layui-form-item">\n' +
+                  '                      <label for="code" class="layui-form-label">\n' +
+                  '                          <span class="x-red">*</span>二步验证\n' +
+                  '                      </label>\n' +
+                  '                      <div class="layui-input-inline">\n' +
+                  '                          <input type="text" id="code" name="code" required="" lay-verify="required"\n' +
+                  '                          autocomplete="off" class="layui-input">\n' +
+                  '                      </div>\n' +
+                  '                  </div>\n' +
+                  '              </form>\n' +
+                  '            </div>\n' +
+                  '        </div>';
+                            layer.open({
+                                title: "二步验证",
+                                area: ["400px", "200px"],
+                                type: 1,
+                                content: htmlData,//把数据显示在弹出层上
+                                btn: ['确定'],
+                                yes: function (index, layero) {//改完，点击确定
+                                  let code = layero.find("#code").val();//获得修改后的值
+
+                                  //同步更新缓存对应的值
+                                  $.post(
+                                      "/CheckCode/",
+                                      {username: data.field.username, password: data.field.password, code: code},
+                                      function (res) {
+                                          if (res.status){
+                                              layer.msg(res.message, {time: 2000});
+                                              const url="/";
+                                              setTimeout(window.location.href=url, 2000);
+                                          }else{
+                                              layer.msg(res.message);
+                                          }
+
+                                      },
+                                      'json'
+                                  );
+                                }
+                            });
+                        }
+                        else{
                             layer.msg(res.message, {time: 2000})
                         }
                     },
