@@ -11,7 +11,7 @@ class AwsEc2(object):
         self.resource = boto3.resource(service_name='ec2', region_name="ap-northeast-1",
                                        aws_access_key_id=self.access_key, aws_secret_access_key=self.secret_key)
 
-    def get_instance(self, vpc_id):
+    def get_instance(self, vpc_id, servername):
         res = self.client.describe_instances(
             Filters=[
                 {
@@ -20,6 +20,12 @@ class AwsEc2(object):
                         vpc_id,
                     ]
                 },
+                {
+                    'Name': 'tag:Name',
+                    'Values': [
+                        servername
+                    ]
+                }
             ],
         )
         return res
@@ -49,17 +55,20 @@ class AwsEc2(object):
         )
         return res
 
-    def get_security_group(self, name):
-        res = self.client.describe_security_groups(
-            Filters=[
-                {
-                    'Name': 'group-name',
-                    'Values': [
-                        name,
-                    ]
-                },
-            ]
-        )
+    def get_security_group(self, name=''):
+        if name != "":
+            res = self.client.describe_security_groups(
+                Filters=[
+                    {
+                        'Name': 'group-name',
+                        'Values': [
+                            name,
+                        ]
+                    },
+                ]
+            )
+        else:
+            res = self.client.describe_security_groups()
         return res
 
     def create_security_group(self, name, vpc_id):

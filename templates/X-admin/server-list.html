@@ -41,6 +41,9 @@
                                     </select>
                                 </div>
                                 <div class="layui-inline layui-show-xs-block">
+                                    <input type="text" name="servername"  id="servername" placeholder="关键词搜索。。。" autocomplete="off" class="layui-input">
+                                </div>
+                                <div class="layui-inline layui-show-xs-block">
                                     <button class="layui-btn"  lay-submit="" lay-filter="search"><i class="layui-icon">&#xe615;</i></button>
                                 </div>
                                 <div class="layui-inline layui-show-xs-block">
@@ -114,11 +117,11 @@
           form.on('submit(search)', function (data) {
             table.reload('server',{
                 url: '/Server/',
-                where: {account: $('#account').val(), vpc: $('#vpc').val()},
+                where: {account: $('#account').val(), vpc: $('#vpc').val(), servername: $('#servername').val()},
                 page: {
                     curr: 1
                 },
-                loading: true
+                loading: false
             });
             return false;
           });

@@ -317,19 +317,34 @@ def server(request):
         limit = int(request.POST.get('limit', 10))
         account = request.POST['account']
         vpc_id = request.POST['vpc']
+        servername = request.POST.get('servername', '')
         try:
             account_obj = models.AwsAccount.objects.get(name=account)
             client = AwsEc2(account_obj.access_key, account_obj.secret_key)
-            res_list = client.get_instance_by_resource(vpc_id)
-            count = len(res_list)
-            data_list = [{'vpc_id': data.vpc_id, 'name': data.tags[0]['Value'],
-                          'instance_type': data.instance_type,
-                          'zone': data.placement['AvailabilityZone'],
-                          'image_id': data.image_id, 'key_name': data.key_name,
-                          'security_group': ",".join([group['GroupName'] for group in data.security_groups]),
-                          'private_address': data.private_ip_address if data.state['Name'] != 'terminated' else '',
-                          'status': data.state['Name']}
-                         for data in res_list[limit * (page - 1):limit * page]]
+            if servername == '':
+                res_list = client.get_instance_by_resource(vpc_id)
+                count = len(res_list)
+                data_list = [{'vpc_id': data.vpc_id, 'name': data.tags[0]['Value'],
+                              'instance_type': data.instance_type,
+                              'zone': data.placement['AvailabilityZone'],
+                              'image_id': data.image_id, 'key_name': data.key_name,
+                              'security_group': ",".join([group['GroupName'] for group in data.security_groups]),
+                              'private_address': data.private_ip_address if data.state['Name'] != 'terminated' else '',
+                              'status': data.state['Name']}
+                             for data in res_list[limit * (page - 1):limit * page]]
+            else:
+                res_dict = client.get_instance(vpc_id, servername)
+                res_list = res_dict['Reservations']
+                print(res_list)
+                count = len(res_list)
+                data_list = [{'vpc_id': data['Instances'][0]['VpcId'], 'name': data['Instances'][0]['Tags'][0]['Value'],
+                              'instance_type': data['Instances'][0]['InstanceType'],
+                              'zone': data['Instances'][0]['Placement']['AvailabilityZone'],
+                              'image_id': data['Instances'][0]['ImageId'], 'key_name': data['Instances'][0]['KeyName'],
+                              'security_group': ",".join([group['GroupName'] for group in data['Instances'][0]['SecurityGroups']]),
+                              'private_address': data['Instances'][0]['PrivateIpAddress'] if data['Instances'][0]['State']['Name'] != 'terminated' else '',
+                              'status': data['Instances'][0]['State']['Name']}
+                             for data in res_list[limit * (page - 1):limit * page]]
             result = {'code': '0', 'msg': 'success', 'count': count, 'data': data_list}
         except Exception as e:
             print(e)
@@ -603,3 +618,28 @@ def delete_2fa_auth(request):
         username = request.POST.get('username', request.user.username)
         res = delete_google_auth(username)
         return HttpResponse(json.dumps(res))
+
+
+@csrf_exempt
+@xframe_options_exempt
+@login_required
+def security_group(request):
+    if request.method == 'GET':
+        return render(request, 'X-admin/security-group-list.html')
+    elif request.method == 'POST':
+        page = int(request.POST.get('page', 1))
+        limit = int(request.POST.get('limit', 10))
+        account = request.POST['account']
+        groupname = request.POST.get('groupname', '')
+        try:
+            account_obj = models.AwsAccount.objects.get(name=account)
+            client = AwsEc2(account_obj.access_key, account_obj.secret_key)
+            res_dict = client.get_security_group(groupname)
+            res_list = res_dict['SecurityGroups']
+            count = len(res_list)
+            data_list = [{'name': data['GroupName']} for data in res_list[limit * (page - 1):limit * page]]
+            result = {'code': '0', 'msg': 'success', 'count': count, 'data': data_list}
+        except Exception as e:
+            print(e)
+            result = {"code": '1', "msg": "获取失败！"}
+        return HttpResponse(json.dumps(result))

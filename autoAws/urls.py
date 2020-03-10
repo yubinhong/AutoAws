@@ -48,6 +48,7 @@ urlpatterns = [
     path('BucketManage/', views.bucket_manage),
     path('Bind2faAuth/', views.bind_2fa_auth),
     path('Delete2faAuth/', views.delete_2fa_auth),
-    path('CheckCode/', views.check_code)
+    path('CheckCode/', views.check_code),
+    path('SecurityGroup/', views.security_group)
 
 ]
