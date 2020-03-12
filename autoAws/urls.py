@@ -37,6 +37,7 @@ urlpatterns = [
     path('Server/', views.server),
     path('ServerDeploy/', views.server_deploy),
     path('ServerAdd/', views.server_add),
+    path('ServerUpdate/', views.server_update),
     path('Vpc/', views.vpc),
     path('Subnet/', views.subnet),
     path('AdminAccount/', views.admin_account),

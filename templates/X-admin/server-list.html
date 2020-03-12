@@ -8,6 +8,7 @@
         <meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
         <link rel="stylesheet" href="../../static/css/font.css">
         <link rel="stylesheet" href="../../static/css/xadmin.css">
+        <link rel="stylesheet" href="../../static/css/main.css">
         <script src="../../static/lib/layui/layui.js" charset="utf-8"></script>
         <script type="text/javascript" src="../../static/js/xadmin.js"></script>
         <!--[if lt IE 9]>
@@ -266,25 +267,106 @@
               , method: 'post'  //
               , page: true //开启分页
               , cols: [[ //表头
-                  {field: 'vpc_id', title: 'vpc_id'}
+                  {field: 'id', title: 'id'}
                   , {field: 'name', title: '服务器名称'}
                   , {field: 'instance_type', title: '实例类型'}
                   , {field: 'private_address', title: '私有IP地址'}
                   , {field: 'zone', title: '区域'}
-                  , {field: 'image_id', title: 'AMI'}
                   , {field: 'key_name', title: '密钥对'}
                   , {field: 'security_group', title: '安全组'}
                   , {field: 'status', title: '状态'}
+                  , {title: '操作', align: 'center', toolbar: '#bar'}
               ]]
               , loading: true
           });
 
+
+          table.on('tool(server)', function (obj) { //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+              let data = obj.data; //获得当前行数据
+              let layEvent = obj.event; //获得 lay-event 对应的值
+              let tr = obj.tr; //获得当前行 tr 的DOM对象
+
+              if (layEvent === 'edit') { //编辑
+                  //do something
+                  let htmlData = '<div class="layui-fluid">\n' +
+                  '            <div class="layui-row">\n' +
+                  '                <form class="layui-form">\n' +
+                  '                  <div class="layui-form-item">\n' +
+                  '                    <div class="layui-block">\n' +
+                  '                      <label class="layui-form-label">安全组</label>'+
+                  '                      <div class="layui-input-inline">\n' +
+                  '                        <select name="security_group" id="security_group" required="" lay-verify="required" multiple lay-filter="security_group" lay-search  lay-omit>\n' +
+                  '                        </select>\n' +
+                  '                      </div>\n' +
+                  '                    </div>\n' +
+                  '                  </div>' +
+                  '              </form>\n' +
+                  '            <div/>\n' +
+                  '        </div>';
+                  layer.open({
+                      title: "更新",
+                      area: ["400px", "400px"],
+                      type: 1,
+                      content: htmlData,//把数据显示在弹出层上
+                      btn: ['确定', '我再想想'],
+                      success: function (layero, index) {
+                          var index1 = layer.load(1);
+                          $.ajax({
+                              type: 'post',
+                              url: '/SecurityGroup/',
+                              data: {'account': $('#account').val(), 'to_limit': 0, 'vpc': $('#vpc').val()},
+                              dataType: 'json',
+                              success: function(res){
+                                  layer.close(index1);
+                                  let data = res.data;
+                                  let selected_list = obj.data.security_group.split(',')
+                                  $('#security_group').empty();
+                                  $('#security_group').append('<option value="">请选择安全组</option>')
+                                  $.each(data, function (index, item) {
+                                      if (selected_list.indexOf(item.name) > -1) {
+                                          $('#security_group').append('<option selected value="'+item.group_id+'">'+item.name+'</option>')
+                                      } else {
+                                          $('#security_group').append('<option value="'+item.group_id+'">'+item.name+'</option>')
+                                      }
+
+                                  });
+                                  form.render();
+                              }
+                          });
+                      },
+                      yes: function (index, layero) {//改完，点击确定
+                          //同步更新缓存对应的值
+                          let index1 = layer.load(1);
+                          $.post(
+                              "/ServerUpdate/",
+                              {account: $('#account').val(), instance_id: data.id, security_group_list: $('#security_group').val().join(",")},
+                              function (res) {
+                                  layer.close(index1);
+                                  let str = "";
+                                  $('#security_group option:selected').each(function () {
+                                            str += $(this).text() + ",";
+                                  });
+                                  layer.msg(res.message, {time: 2000});
+                                  if (res.code === 0) {
+
+                                      obj.update({
+                                          security_group: str
+                                      });
+                                      layer.close(index);
+                                  }
+                              },
+                              'json'
+                          );
+
+                      }
+                  });
+              }
+          });
       });
 
     </script>
     <script type="text/html" id="bar">
         <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
-        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
 
     </script>
 </html>

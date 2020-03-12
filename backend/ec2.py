@@ -55,17 +55,15 @@ class AwsEc2(object):
         )
         return res
 
-    def get_security_group(self, name=''):
-        if name != "":
+    def get_security_group(self, **kwargs):
+        filter_dict = {}
+        if len(kwargs.keys()) > 0:
+            for key in kwargs.keys():
+                if kwargs[key] != '':
+                    filter_dict[key] = kwargs[key]
+            filter_list = [{'Name': key, 'Values': [value]} for key, value in filter_dict.items()]
             res = self.client.describe_security_groups(
-                Filters=[
-                    {
-                        'Name': 'group-name',
-                        'Values': [
-                            name,
-                        ]
-                    },
-                ]
+                Filters=filter_list
             )
         else:
             res = self.client.describe_security_groups()
@@ -82,11 +80,21 @@ class AwsEc2(object):
     def security_group(self, name, vpc_id):
         try:
             res = self.create_security_group(name, vpc_id)
-            print(e)
         except Exception as e:
-            res = self.get_security_group(name)['SecurityGroups'][0]
+            param_dict = {'group-name': name}
+            res = self.get_security_group(**param_dict)['SecurityGroups'][0]
 
         return res
+
+    def modified_security_group(self, instance_id, groups):
+        try:
+            res = self.client.modify_instance_attribute(InstanceId=instance_id, Groups=groups)
+            result = {'code': 0, 'msg': res}
+        except Exception as e:
+            print(e)
+            result = {'code': 1, 'msg': str(e)}
+
+        return result
 
     def create_instance_from_template(self, instance_template_list, vpc_id, subnet_id):
         res_list = []
