@@ -126,12 +126,14 @@
               });
           });
           form.on('submit(deploy)', function (data) {
+              let index1 = layer.load(1);
                 $.ajax({
                     type: 'post',
                     url: '/ServerDeploy/',
                     data: data.field,
                     dataType: 'json',
                     success: function(res){
+                        layer.close(index1);
                         let code = res.code;
                         if (code === 0) {
                             layer.msg("部署成功！")

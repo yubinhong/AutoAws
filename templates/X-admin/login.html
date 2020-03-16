@@ -79,6 +79,9 @@
                                 type: 1,
                                 content: htmlData,//把数据显示在弹出层上
                                 btn: ['确定'],
+                                success: function (layero, index) {
+                                    $('#code').focus();
+                                },
                                 yes: function (index, layero) {//改完，点击确定
                                   let code = layero.find("#code").val();//获得修改后的值
 
