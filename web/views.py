@@ -330,6 +330,7 @@ def server(request):
                               'image_id': data.image_id, 'key_name': data.key_name,
                               'security_group': ",".join([group['GroupName'] for group in data.security_groups]),
                               'private_address': data.private_ip_address if data.state['Name'] != 'terminated' else '',
+                              'public_address': data.public_ip_address if data.state['Name'] == 'running' else '',
                               'status': data.state['Name']}
                              for data in res_list[limit * (page - 1):limit * page]]
             else:
@@ -341,7 +342,10 @@ def server(request):
                               'zone': data['Instances'][0]['Placement']['AvailabilityZone'],
                               'image_id': data['Instances'][0]['ImageId'], 'key_name': data['Instances'][0]['KeyName'],
                               'security_group': ",".join([group['GroupName'] for group in data['Instances'][0]['SecurityGroups']]),
-                              'private_address': data['Instances'][0]['PrivateIpAddress'] if data['Instances'][0]['State']['Name'] != 'terminated' else '',
+                              'private_address': data['Instances'][0]['PrivateIpAddress'] if
+                              data['Instances'][0]['State']['Name'] != 'terminated' else '',
+                              'public_address': data['Instances'][0]['PublicIpAddress'] if
+                              data['Instances'][0]['State']['Name'] == 'running' else '',
                               'status': data['Instances'][0]['State']['Name']}
                              for data in res_list[limit * (page - 1):limit * page]]
             result = {'code': '0', 'msg': 'success', 'count': count, 'data': data_list}
